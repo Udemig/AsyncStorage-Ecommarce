@@ -8,6 +8,7 @@ import {
   Image,
   Dimensions,
   Animated,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -28,9 +29,19 @@ export default function ProductInfo() {
   //* Bastığımız ürünün idsini useRoute içerisindeki paramsdan aldık.
   const {productID} = route.params;
   const [product, setProduct] = useState([]);
+
+  const clearAsyncStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     getDataFromDB();
-  }, []);
+    // clearAsyncStorage();
+  }, [navigation]);
 
   const getDataFromDB = () => {
     // for (let index = 0; index < Items.length; index++) {
@@ -45,24 +56,33 @@ export default function ProductInfo() {
       return;
     }
   };
-
+  // sepete ekleme fonksiyonu
   const addToCart = async id => {
+    //* Sepette önceden bu veri varsa AsyncStorage dan veriyi getir
     let itemArray = await AsyncStorage.getItem('cartItems');
-    console.log(itemArray);
 
     itemArray = JSON.parse(itemArray);
 
     if (itemArray) {
+      let array = itemArray;
+      array.push(id);
+
       try {
-      } catch (error) {}
+        await AsyncStorage.setItem('cartItems', JSON.stringify(array));
+        navigation.navigate('Home');
+      } catch (error) {
+        return error;
+      }
     } else {
       let array = [];
       array.push(id);
       try {
         await AsyncStorage.setItem('cartItems', JSON.stringify(array));
+        // AsyncStorage veriyi ekledikten sonra homescreene yönlendir.
+        navigation.navigate('Home');
       } catch (error) {
         console.log(error);
-        return;
+        return error;
       }
     }
   };
